@@ -1,12 +1,13 @@
 <?php 
 include 'navbar.php'; 
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>No Reload</title>
+    <title>No Reload-oop</title>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -24,7 +25,7 @@ include 'navbar.php';
 <body>
 
 <div class="container">
-    <h2 class="text-center">Employee Management</h2>
+    <h2 class="text-center">EmployeeManagement-oop</h2>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#employeeModal" onclick="openModal('add')">Add Employee</button>
 
     <table id="employeeTable">
@@ -97,12 +98,71 @@ function loadEmployees() {
                     </td>
                 </tr>`;
             });
+            if ($.fn.DataTable.isDataTable('#employeeTable')) {
+                $('#employeeTable').DataTable().clear().destroy();
+            }
+
             $('#employeeTable tbody').html(rows);
             $('#employeeTable').DataTable({
                 "pageLength": 5,
                 "lengthMenu": [5, 10, 25, 50],
                 "ordering": true,
                 "searching": true
+            });
+        }
+    });
+}
+window.openModal = function(mode, id = '', name = '', phone = '', address = '') {
+    $('#modalTitle').text(mode === 'add' ? 'Add Employee' : 'Edit Employee');
+    $('#empId').val(id);
+    $('#empName').val(name);
+    $('#empPhone').val(phone);
+    $('#empAddress').val(address);
+    $('#employeeModal').modal('show');
+};
+
+// Save Employee (Add/Edit)
+$('#employeeForm').submit(function(e) {
+    e.preventDefault();
+    
+    let id = $('#empId').val();
+    let name = $('#empName').val();
+    let phone = $('#empPhone').val();
+    let address = $('#empAddress').val();
+    let action = id ? 'update' : 'add';
+
+    $.ajax({
+        url: 'EmployeeController.php',
+        type: 'POST',
+        data: { id, name, phone, address, action },
+        
+        success: function(response) {
+            Swal.fire('Success', response, 'success');
+            $('#employeeModal').modal('hide');
+            $('#employeeForm')[0].reset();
+            loadEmployees();
+        }
+    });
+});
+
+// Delete Employee
+window.deleteEmployee = function(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'This action cannot be undone!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'EmployeeController.php',
+                type: 'POST',
+                data: { id, action: 'delete' },
+                success: function(response) {
+                    Swal.fire('Deleted!', response, 'success');
+                    loadEmployees();
+                }
             });
         }
     });
